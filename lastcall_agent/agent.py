@@ -39,12 +39,9 @@ class SessionRequest(BaseModel):
     user_id: str
     session_id: str
 
-
-origins = ["http://localhost:5173"]
+origins = os.getenv("FRONTEND_URL")
 
 # Cors config
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
