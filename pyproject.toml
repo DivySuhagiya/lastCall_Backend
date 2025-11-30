@@ -8,6 +8,4 @@ dependencies = [
     "fastapi[standard]>=0.121.1",
     "google-adk>=1.18.0",
     "load-dotenv>=0.1.0",
-    "openai>=2.8.1",
-    "pyaudio>=0.2.14",
 ]
