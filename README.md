@@ -1,8 +1,8 @@
 # Last Call - Agentic Intelligence Backend 🧠
 
-This is the backend service for **Last Call**, an immersive 3D murder mystery interrogation game. It is built using **FastAPI** and the **Google Gen AI Agent Development Kit (ADK)**.
+This is the backend service for **Last Call**, an immersive 3D murder mystery interrogation game. It is built using **FastAPI** and the **Google Agent Development Kit (ADK)**.
 
-The backend acts as the "Brain" of the operation, managing game sessions, maintaining conversation history, and dynamically engineering prompts for the Gemini 1.5 Flash model based on the game state (e.g., who is the killer vs. who is innocent).
+The backend acts as the "Brain" of the operation, managing game sessions, maintaining conversation history, and dynamically engineering prompts for the Gemini 2.5 Flash model based on the game state (e.g., who is the killer vs. who is innocent).
 
 ---
 
@@ -157,3 +157,4 @@ If deploying to a serverless platform (like Render Free Tier):
 ## 📄 License
 
 MIT License
+
