@@ -1,26 +1,60 @@
-# Last Call - Agentic Intelligence Backend 🧠
+# Last Call: The Infinite Murder Mystery Engine 🧠🕵️‍♂️
 
-This is the backend service for **Last Call**, an immersive 3D murder mystery interrogation game. It is built using **FastAPI** and the **Google Agent Development Kit (ADK)**.
+> **Backend Service**  
+> **Powered by:** Google Gen AI ADK & Gemini 2.5 Flash Lite
 
-The backend acts as the "Brain" of the operation, managing game sessions, maintaining conversation history, and dynamically engineering prompts for the Gemini 2.5 Flash model based on the game state (e.g., who is the killer vs. who is innocent).
+This is the backend engine for **Last Call**, a fully procedural murder mystery game. Unlike traditional games with pre-written scripts, this system uses a **Sequential Multi-Agent Pipeline** to generate unique plots, suspect profiles, and evidence assets in real-time.
+
+It orchestrates a team of specialized AI agents (Storyteller, Profiler, Visualizer) to ensure every game session is unique, coherent, and infinitely replayable.
 
 ---
 
 ## ✨ Features
 
-- **Stateful Sessions**: Uses `InMemorySessionService` to track unique game states (Target, Killer, History) for every connected user.
-- **Dynamic Prompt Injection**: Real-time Context Compaction in `prompt_builder.py` ensures the AI never hallucinates guilt if it is assigned an "Innocent" role.
-- **Gemini 2.5 Integration**: Leverages the latest Gemini models for high-speed reasoning and natural language generation.
+- **Sequential Agent Pipeline**: A chain of 4 specialized agents working in harmony:
+  1. **Story Agent**: Writes the plot (Victim, Killer, Motive).
+  2. **Scenario Builder**: Generates system prompts for 3 unique suspects.
+  3. **Evidence Designer**: Identifies physical clues and writes visual prompts.
+  4. **Visualizer**: Generates image assets for the evidence using tools.
+- **Infinite Replayability**: No two playthroughs are the same. The "Truth" is generated from scratch every time you start a story.
+- **Stateful Intelligence**: Uses `InMemorySessionService` to persist the procedurally generated world state (Target, Killer, Plot) across the user's session.
+- **Structured Output**: Leverages **Pydantic** to enforce strict JSON schemas between agents, ensuring the pipeline never breaks.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Language**: Python 3.10+
+- **Language**: Python 3.12+
 - **Framework**: FastAPI
-- **AI Engine**: Google Gemini 2.5 Flash
-- **Agent Framework**: Google Agent Development Kit (ADK)
+- **AI Engine**: Google Gemini 2.5 Flash Lite
+- **Agent Framework**: Google Gen AI Agent Development Kit (ADK)
+- **Package Manager**: uv
 - **Server**: Uvicorn
+
+---
+
+## 📂 Project Structure
+
+```text
+.
+├── lastcall_agent/
+│   ├── sub_agents/                 # 🧠 Specialized Agent Logic
+│   │   ├── evidence_image_generator_agent.py
+│   │   ├── evidence_prompt_agent.py
+│   │   ├── scenario_builder_agent.py
+│   │   └── story_agent.py
+│   ├── tools/                      # 🛠️ Agent Tools (Function Calling)
+│   │   └── generate_image.py
+│   ├── agent.py                    # 🚀 Main FastAPI Application & Pipeline Config
+│   ├── prompt_builder.py           # Context Injection Logic
+│   ├── schemas.py                  # Pydantic Data Models
+│   └── __init__.py
+├── .gitignore
+├── .python-version
+├── pyproject.toml                  # Dependency Configuration
+├── README.md
+└── uv.lock                         # Lockfile for reproducible builds
+```
 
 ---
 
@@ -29,34 +63,34 @@ The backend acts as the "Brain" of the operation, managing game sessions, mainta
 ### Prerequisites
 
 - Python 3.10 or higher
-- A Google Gemini API Key ([Get it from Google AI Studio](https://aistudio.google.com/))
+- `uv` installed ([Recommended for speed](https://github.com/astral-sh/uv))
+- A Google Gemini API Key ([Get it from Google AI Studio](https://aistudio.google.com/app/apikey))
 
 ### 1. Installation
 
-**Create a virtual environment:**
-```bash
-# Windows
-uv venv venv
-.venv\Scripts\activate
+This project uses `uv` for blazing-fast dependency management.
 
-# Mac/Linux
-uv venv .venv
-source venv/bin/activate
-```
+**Clone and Sync:**
 
-**Install dependencies:**
 ```bash
+# Clone the repository
+git clone https://github.com/DivySuhagiya/lastCall_Backend.git
+cd lastCall_Backend
+
+# Create virtual env and install dependencies
 uv sync
 ```
 
 ### 2. Environment Configuration
 
-**Create a `.env` file in the root directory:**
+Create a `.env` file in the root directory:
+
 ```bash
 touch .env
 ```
 
-**Add your configuration:**
+Add your configuration:
+
 ```env
 # Required: Your Google Gemini API Key
 GOOGLE_API_KEY=your_actual_api_key_here
@@ -67,11 +101,10 @@ FRONTEND_URL=http://localhost:5173
 
 ### 3. Running the Server
 
-**Start the application:**
+Start the application using `fastapi`:
+
 ```bash
-cd lastcall_agent
-fastapi dev agent.py  # development mode
-fastapi run agent.py  # production mode
+fastapi dev agent.py
 ```
 
 The server will start at `http://localhost:8000`.
@@ -82,66 +115,64 @@ The server will start at `http://localhost:8000`.
 
 ### 1. Create Session
 
-Initializes a new game state. Randomly assigns roles (Target/Killer) on the client side and stores them here.
+Initializes the memory service for the user. This must be called before generating a story.
 
 - **URL**: `/create_session`
 - **Method**: `POST`
 - **Body**:
+
 ```json
 {
   "user_id": "user_123",
-  "session_id": "uuid_v4",
-  "target": "amelia",
-  "killer": "sebastian"
+  "session_id": "uuid_v4"
 }
 ```
 
-### 2. Chat
+### 2. Generate Story (The Engine)
 
-Sends a user message to the agent and retrieves the response.
+Triggers the Sequential Agent Pipeline. This creates the world state (Plot, Suspects, Evidence).  
+⚠️ **Note**: This may take 5-10 seconds to complete.
+
+- **URL**: `/create_story`
+- **Method**: `POST`
+- **Body**:
+
+```json
+{
+  "app_name": "lastCall",
+  "user_id": "user_123",
+  "session_id": "uuid_v4"
+}
+```
+
+- **Response**: Returns the full `generated_story`, `generated_scenarios` (for the characters), and `generated_evidence_urls`.
+
+### 3. Chat (Interrogation)
+
+Talk to a specific suspect. The frontend must pass the character's generated "instructions" (from the `/create_story` response) so the agent knows who to roleplay.
 
 - **URL**: `/chat`
 - **Method**: `POST`
 - **Body**:
+
 ```json
 {
   "app_name": "lastCall",
   "user_id": "user_123",
   "session_id": "uuid_v4",
-  "message": "Where were you at 8:45 PM?"
+  "victim_name": "Arthur Pendelton",
+  "character_name": "Amelia",
+  "instructions": "[ROLE: You are the killer...]",
+  "message": "Where were you at 8:00 PM?"
 }
 ```
 
-- **Response**:
-```json
-{
-  "responses": [
-    {
-      "text": "I was in my room reading. Ask the maid.",
-      "role": "agent"
-    }
-  ]
-}
-```
-
-### 3. Delete Session
+### 4. Delete Session
 
 Cleans up memory when the user disconnects or restarts.
 
 - **URL**: `/delete_session`
 - **Method**: `POST`
-
----
-
-## 📂 Project Structure
-```
-.
-├── lastcall_agent/
-│   ├── prompt_builder.py   # 🧠 Core Logic: Dynamic Scenario Generators
-│   ├── schemas.py          # Pydantic models for API requests
-│   ├── agent.py            # FastAPI application entry point
-└── .env                    # Environment secrets
-```
 
 ---
 
@@ -157,4 +188,3 @@ If deploying to a serverless platform (like Render Free Tier):
 ## 📄 License
 
 MIT License
-
